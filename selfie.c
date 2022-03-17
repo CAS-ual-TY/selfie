@@ -5345,6 +5345,18 @@ void compile_statement() {
     } else if (symbol == SYM_ASSIGN) {
       entry = get_variable_or_big_int(variable_or_procedure_name, VARIABLE);
 
+      offset = get_address(entry);
+
+      if (is_signed_integer(offset, 12)) {
+        talloc();
+
+        emit_addi(current_temporary(), get_scope(entry), offset);
+      } else {
+        load_upper_base_address(entry);
+
+        emit_addi(current_temporary(), current_temporary(), sign_extend(get_bits(offset, 0, 12), 12));
+      }
+
       ltype = get_type(entry);
 
       get_symbol();
@@ -5354,19 +5366,9 @@ void compile_statement() {
       if (ltype != rtype)
         type_warning(ltype, rtype);
 
-      offset = get_address(entry);
+      emit_store(previous_temporary(), 0, current_temporary());
 
-      if (is_signed_integer(offset, 12)) {
-        emit_store(get_scope(entry), offset, current_temporary());
-
-        tfree(1);
-      } else {
-        load_upper_base_address(entry);
-
-        emit_store(current_temporary(), sign_extend(get_bits(offset, 0, 12), 12), previous_temporary());
-
-        tfree(2);
-      }
+      tfree(2);
 
       number_of_assignments = number_of_assignments + 1;
 
