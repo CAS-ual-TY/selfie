@@ -5347,13 +5347,6 @@ void compile_statement() {
 
       ltype = get_type(entry);
 
-      get_symbol();
-
-      rtype = compile_expression();
-
-      if (ltype != rtype)
-        type_warning(ltype, rtype);
-
       offset = get_address(entry);
 
       if (is_signed_integer(offset, 12)) {
@@ -5366,7 +5359,14 @@ void compile_statement() {
         emit_addi(current_temporary(), current_temporary(), sign_extend(get_bits(offset, 0, 12), 12));
       }
 
-      emit_store(current_temporary(), 0, previous_temporary());
+      get_symbol();
+
+      rtype = compile_expression();
+
+      if (ltype != rtype)
+        type_warning(ltype, rtype);
+
+      emit_store(previous_temporary(), 0, current_temporary());
 
       tfree(2);
 
