@@ -11,8 +11,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  thirty-two-bit-no-gc:
-    name: Test 32-bit, no gc
+  thirty-two-bit-no-gc-hypster:
+    name: Test 32-bit, no gc, hypster
     runs-on: ubuntu-latest
 
     steps:
@@ -30,8 +30,8 @@ jobs:
     - name: Run test, no gc
       run: ./selfie-32 -l selfie-32.m -m 4 -l selfie-32.m -y 2 -c selfie.c
 
-  thirty-two-bit-with-gc:
-    name: Test 32-bit, with gc
+  thirty-two-bit-with-gc-hypster:
+    name: Test 32-bit, with gc, hypster
     runs-on: ubuntu-latest
 
     steps:
@@ -48,3 +48,41 @@ jobs:
       run: ./selfie-32 -c selfie.c -o selfie-32.m
     - name: Run test, with gc
       run: ./selfie-32 -l selfie-32.m -m 4 -l selfie-32.m -gc -y 2 -c selfie.c
+
+  thirty-two-bit-no-gc-mipster:
+    name: Test 32-bit, no gc, mipster
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout selfie
+      uses: actions/checkout@v2
+    - name: Set up GCC
+      uses: egor-tensin/setup-gcc@v1
+      with:
+        version: latest
+        platform: x86
+    - name: Make selfie-32
+      run: make selfie-32
+    - name: selfie-32.m
+      run: ./selfie-32 -c selfie.c -o selfie-32.m
+    - name: Run test, no gc
+      run: ./selfie-32 -l selfie-32.m -m 4 -l selfie-32.m -m 2 -c selfie.c
+
+  thirty-two-bit-with-gc-mipster:
+    name: Test 32-bit, with gc, mipster
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout selfie
+      uses: actions/checkout@v2
+    - name: Set up GCC
+      uses: egor-tensin/setup-gcc@v1
+      with:
+        version: latest
+        platform: x86
+    - name: Make selfie-32
+      run: make selfie-32
+    - name: selfie-32.m
+      run: ./selfie-32 -c selfie.c -o selfie-32.m
+    - name: Run test, with gc
+      run: ./selfie-32 -l selfie-32.m -m 4 -l selfie-32.m -gc -m 2 -c selfie.c
