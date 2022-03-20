@@ -1,0 +1,56 @@
+name: Make Everything Selfie
+
+on:
+  push:
+    paths-ignore:
+    - '**.md'
+    - '**.txt'
+    - 'docs'
+    - 'AUTHORS'
+    - 'LICENSE'
+  workflow_dispatch:
+
+jobs:
+  32-bit-no-gc:
+    name: Test 32-bit, no gc
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout selfie
+      uses: actions/checkout@v2
+    - name: Make selfie-32
+      run: make selfie-32
+    - name: Run test, no gc
+      run: ./selfie-32 -l selfie-32.m -m 4 -l selfie-32.m -y 2 -c selfie.c
+
+  32-bit-with-gc:
+    name: Test 32-bit, with gc
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout selfie
+      uses: actions/checkout@v2
+    - name: Make selfie-32
+      run: make selfie-32
+    - name: Run test, with gc
+      run: ./selfie-32 -l selfie-32.m -m 4 -l selfie-32.m -gc -y 2 -c selfie.c
+
+  make-all-sequentially:
+    name: Make all
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout selfie
+      uses: actions/checkout@v2
+    - name: Make all
+      run: make all
+
+  make-everything-sequentially:
+    name: Make everything
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout selfie
+      uses: actions/checkout@v2
+    - name: Make everything
+      run: make everything
