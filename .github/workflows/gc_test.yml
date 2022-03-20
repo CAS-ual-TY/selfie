@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  32-bit-no-gc:
+  thirty-two-bit-no-gc:
     name: Test 32-bit, no gc
     runs-on: ubuntu-latest
 
@@ -23,7 +23,7 @@ jobs:
     - name: Run test, no gc
       run: ./selfie-32 -l selfie-32.m -m 4 -l selfie-32.m -y 2 -c selfie.c
 
-  32-bit-with-gc:
+  thirty-two-bit-with-gc:
     name: Test 32-bit, with gc
     runs-on: ubuntu-latest
 
