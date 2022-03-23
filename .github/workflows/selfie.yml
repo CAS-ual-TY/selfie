@@ -18,11 +18,13 @@ on:
   schedule:
     # trigger fridays at 12am
     - cron: '0 0 * * 5'
+  workflow_dispatch:
 
 jobs:
   make-all-on-linux:
     name: Make all of selfie on Linux
     runs-on: ubuntu-latest
+    if: ${{ (!github.event.repository.private) || (github.ref == 'refs/heads/main') }}
 
     steps:
     - name: Checkout selfie
@@ -39,6 +41,7 @@ jobs:
   make-all-on-macos:
     name: Make all of selfie on macOS
     runs-on: macos-latest
+    if: ${{ !github.event.repository.private }}
 
     steps:
     - name: Checkout selfie
@@ -55,6 +58,7 @@ jobs:
   make-all-on-windows:
     name: Make all of selfie on Windows
     runs-on: windows-latest
+    if: ${{ !github.event.repository.private }}
 
     steps:
     - name: Checkout selfie
@@ -71,6 +75,7 @@ jobs:
   make-everything-on-docker:
     name: Make everything of selfie on docker
     runs-on: ubuntu-latest
+    if: ${{ (!github.event.repository.private) || (github.ref == 'refs/heads/main') }}
 
     # usage:
     #
