@@ -1,6 +1,6 @@
 name: Autograde Selfie Assignment
 
-on:# just forcing a random push
+on:
   push:
     paths:
     - '**.c'
