@@ -324,7 +324,9 @@ def check_threads() -> List[Check]:
 
 def check_threadsafe_malloc() -> List[Check]:
     return check_riscv_instruction(LR_INSTRUCTION, 'load-reserved.c') + \
-        check_riscv_instruction(SC_INSTRUCTION, 'store-conditional.c')
+        check_riscv_instruction(SC_INSTRUCTION, 'store-conditional.c') + \
+        check_mipster_execution('lr-sc-interleaved.c', 42,
+                                'lr and sc instructions are implemented with the right semantics')
 
 
 def check_treiber_stack() -> List[Check]:
