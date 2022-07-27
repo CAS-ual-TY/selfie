@@ -322,10 +322,13 @@ def check_threads() -> List[Check]:
                                 'two threads correctly calculate the sum from 1 to 20 with Dekker\'s algorithm on HYPSTER')
 
 
-def check_treiber_stack() -> List[Check]:
+def check_threadsafe_malloc() -> List[Check]:
     return check_riscv_instruction(LR_INSTRUCTION, 'load-reserved.c') + \
-        check_riscv_instruction(SC_INSTRUCTION, 'store-conditional.c') + \
-        check_execution('./selfie -c <assignment>stack-push.c -m 128',
+        check_riscv_instruction(SC_INSTRUCTION, 'store-conditional.c')
+
+
+def check_treiber_stack() -> List[Check]:
+    return check_execution('./selfie -c <assignment>stack-push.c -m 128',
                         'all pushed elements are actually in the treiber-stack',
                         success_criteria=lambda code, out: is_permutation_of(out, [0, 1, 2, 3, 4, 5, 6, 7])) + \
         check_execution('./selfie -c <assignment>stack-pop.c -m 128',
@@ -400,9 +403,12 @@ assignment_lock = Assignment('lock', 'Systems', 'lock',
 assignment_threads = Assignment('threads', 'Systems', 'threads',
            REPO_BLOB_BASE_URI + 'grader/systems-assignments.md#assignment-threads',
            check_threads, parent = assignment_fork_wait_exit)
+assignment_threadsafe_malloc = Assignment('threadsafe-malloc', 'Systems', 'threadsafe-malloc',
+           REPO_BLOB_BASE_URI + 'grader/systems-assignments.md#assignment-threadsafe-malloc',
+           check_threadsafe_malloc, parent = assignment_threads)
 assignment_treiber_stack = Assignment('treiber-stack', 'Systems', 'treiber-stack',
            REPO_BLOB_BASE_URI + 'grader/systems-assignments.md#assignment-treiber-stack',
-           check_treiber_stack, parent = assignment_threads)
+           check_treiber_stack, parent = assignment_threadsafe_malloc)
 
 
 assignments: List[Assignment] = [
@@ -425,6 +431,7 @@ assignments: List[Assignment] = [
     assignment_fork_wait_exit,
     assignment_lock,
     assignment_threads,
+    assignment_threadsafe_malloc,
     assignment_treiber_stack
 ]
 
