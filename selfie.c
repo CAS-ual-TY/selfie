@@ -97,12 +97,6 @@ https://github.com/cksystemsteaching/selfie
 // selfie bootstraps int to uint64_t!
 void exit(int code);
 
-uint64_t read(uint64_t fd, uint64_t* buffer, uint64_t bytes_to_read);
-uint64_t write(uint64_t fd, uint64_t* buffer, uint64_t bytes_to_write);
-
-// selfie bootstraps char to uint64_t and ignores ellipsis!
-uint64_t open(char* filename, uint64_t flags, ...);
-
 // selfie bootstraps void* to uint64_t* and unsigned to uint64_t!
 void* malloc(unsigned long);
 
@@ -151,8 +145,8 @@ char*    string_shrink(char* s);
 void     string_reverse(char* s);
 uint64_t string_compare(char* s, char* t);
 
-uint64_t atoi(char* s);
-char*    itoa(uint64_t n, char* s, uint64_t b, uint64_t d, uint64_t a);
+uint64_t ascii_to_int(char* s);
+char*    int_to_ascii(uint64_t n, char* s, uint64_t b, uint64_t d, uint64_t a);
 
 uint64_t fixed_point_ratio(uint64_t a, uint64_t b, uint64_t f);
 uint64_t fixed_point_percentage(uint64_t r, uint64_t f);
@@ -227,10 +221,10 @@ uint64_t SIZEOFUINT64STARINBITS = 64; // SIZEOFUINT64STAR * 8
 
 uint64_t* power_of_two_table;
 
-uint64_t UINT64_MAX; // maximum numerical value of an unsigned 64-bit integer
+uint64_t S_UINT64_MAX; // maximum numerical value of an unsigned 64-bit integer
 
-uint64_t INT64_MAX; // maximum numerical value of a signed 64-bit integer
-uint64_t INT64_MIN; // minimum numerical value of a signed 64-bit integer
+uint64_t S_INT64_MAX; // maximum numerical value of a signed 64-bit integer
+uint64_t S_INT64_MIN; // minimum numerical value of a signed 64-bit integer
 
 uint64_t SINGLEWORDSIZE       = 4;  // single-word size in bytes
 uint64_t SINGLEWORDSIZEINBITS = 32; // single-word size in bits
@@ -252,12 +246,12 @@ char* filename_buffer; // buffer for opening files
 uint64_t* binary_buffer; // buffer for binary I/O
 
 // flags for opening read-only files
-// LINUX:       0 = 0x0000 = O_RDONLY (0x0000)
-// MAC:         0 = 0x0000 = O_RDONLY (0x0000)
-// WINDOWS: 32768 = 0x8000 = _O_BINARY (0x8000) | _O_RDONLY (0x0000)
+// LINUX:       0 = 0x0000 = F_O_RDONLY (0x0000)
+// MAC:         0 = 0x0000 = F_O_RDONLY (0x0000)
+// WINDOWS: 32768 = 0x8000 = _O_BINARY (0x8000) | _F_O_RDONLY (0x0000)
 // since LINUX/MAC do not seem to mind about _O_BINARY set
 // we use the WINDOWS flags as default
-uint64_t O_RDONLY = 32768;
+uint64_t F_O_RDONLY = 32768;
 
 // flags for opening write-only files
 // LINUX: 577 = 0x0241 = O_CREAT (0x0040) | O_TRUNC (0x0200) | O_WRONLY (0x0001)
@@ -327,15 +321,15 @@ void init_library() {
   }
 
   // compute 64-bit unsigned integer range using signed integer arithmetic
-  UINT64_MAX = -1;
+  S_UINT64_MAX = -1;
 
   // compute 64-bit signed integer range using unsigned integer arithmetic
-  INT64_MIN = two_to_the_power_of(SIZEOFUINT64INBITS - 1);
-  INT64_MAX = INT64_MIN - 1;
+  S_INT64_MIN = two_to_the_power_of(SIZEOFUINT64INBITS - 1);
+  S_INT64_MAX = S_INT64_MIN - 1;
 
   // target-dependent, see init_target()
   SIZEOFUINT     = SIZEOFUINT64;
-  UINT_MAX       = UINT64_MAX;
+  UINT_MAX       = S_UINT64_MAX;
   WORDSIZE       = SIZEOFUINT64;
   WORDSIZEINBITS = WORDSIZE * 8;
 
@@ -490,7 +484,7 @@ char* string     = (char*) 0; // stores scanned string
 
 uint64_t literal = 0; // numerical value of most recently scanned integer or character
 
-uint64_t integer_is_signed = 0; // enforce INT64_MIN limit if '-' was scanned before
+uint64_t integer_is_signed = 0; // enforce S_INT64_MIN limit if '-' was scanned before
 
 uint64_t symbol; // most recently recognized symbol
 
@@ -2537,7 +2531,7 @@ void init_target() {
   if (IS64BITTARGET) {
     if (IS64BITSYSTEM) {
       SIZEOFUINT = SIZEOFUINT64;
-      UINT_MAX   = UINT64_MAX;
+      UINT_MAX   = S_UINT64_MAX;
 
       WORDSIZE       = SIZEOFUINT64;
       WORDSIZEINBITS = WORDSIZE * 8;
@@ -2563,7 +2557,7 @@ void init_target() {
       WORDSIZE = SINGLEWORDSIZE;
     } else {
       SIZEOFUINT = SIZEOFUINT64;
-      UINT_MAX   = UINT64_MAX;
+      UINT_MAX   = S_UINT64_MAX;
 
       WORDSIZE = SIZEOFUINT64;
     }
@@ -2672,24 +2666,24 @@ uint64_t max(uint64_t a, uint64_t b) {
 }
 
 uint64_t signed_less_than(uint64_t a, uint64_t b) {
-  // INT64_MIN <= n <= INT64_MAX iff
-  // INT64_MIN + INT64_MIN <= n + INT64_MIN <= INT64_MAX + INT64_MIN iff
-  // -2^64 <= n + INT64_MIN <= 2^64 - 1 (sign-extended to 65 bits) iff
-  // 0 <= n + INT64_MIN <= UINT64_MAX
-  return a + INT64_MIN < b + INT64_MIN;
+  // S_INT64_MIN <= n <= S_INT64_MAX iff
+  // S_INT64_MIN + S_INT64_MIN <= n + S_INT64_MIN <= S_INT64_MAX + S_INT64_MIN iff
+  // -2^64 <= n + S_INT64_MIN <= 2^64 - 1 (sign-extended to 65 bits) iff
+  // 0 <= n + S_INT64_MIN <= S_UINT64_MAX
+  return a + S_INT64_MIN < b + S_INT64_MIN;
 }
 
 uint64_t signed_division(uint64_t a, uint64_t b) {
   // assert: b != 0
-  // assert: a == INT64_MIN -> b != -1
-  if (a == INT64_MIN)
-    if (b == INT64_MIN)
+  // assert: a == S_INT64_MIN -> b != -1
+  if (a == S_INT64_MIN)
+    if (b == S_INT64_MIN)
       return 1;
     else if (signed_less_than(b, 0))
-      return INT64_MIN / absolute(b);
+      return S_INT64_MIN / absolute(b);
     else
-      return -(INT64_MIN / b);
-  else if (b == INT64_MIN)
+      return -(S_INT64_MIN / b);
+  else if (b == S_INT64_MIN)
     return 0;
   else if (signed_less_than(a, 0))
     if (signed_less_than(b, 0))
@@ -2872,7 +2866,7 @@ uint64_t string_compare(char* s, char* t) {
       return 0;
 }
 
-uint64_t atoi(char* s) {
+uint64_t ascii_to_int(char* s) {
   uint64_t i;
   uint64_t n;
   uint64_t c;
@@ -2932,7 +2926,7 @@ uint64_t atoi(char* s) {
   return n;
 }
 
-char* itoa(uint64_t n, char* s, uint64_t b, uint64_t d, uint64_t a) {
+char* int_to_ascii(uint64_t n, char* s, uint64_t b, uint64_t d, uint64_t a) {
   // assert: b in {2,4,8,10,16}
 
   uint64_t i;
@@ -3146,12 +3140,12 @@ void print_string(char* s) {
 
 void print_unsigned_integer(uint64_t n) {
   // use print, not printf to avoid recursion
-  print(itoa(n, integer_buffer, 10, 0, 0));
+  print(int_to_ascii(n, integer_buffer, 10, 0, 0));
 }
 
 void print_integer(uint64_t n) {
   // use print, not printf to avoid recursion
-  print(itoa(n, integer_buffer, 10, 1, 0));
+  print(int_to_ascii(n, integer_buffer, 10, 1, 0));
 }
 
 void print_fractional(uint64_t n, uint64_t p) {
@@ -3167,11 +3161,11 @@ void print_fractional(uint64_t n, uint64_t p) {
   }
 
   // use print, not printf to avoid recursion
-  print(itoa(n, integer_buffer, 10, 0, 0));
+  print(int_to_ascii(n, integer_buffer, 10, 0, 0));
 }
 
 void unprint_integer(uint64_t n) {
-  n = string_length(itoa(n, integer_buffer, 10, 1, 0));
+  n = string_length(int_to_ascii(n, integer_buffer, 10, 1, 0));
 
   while (n > 0) {
     put_character(CHAR_BACKSPACE);
@@ -3182,7 +3176,7 @@ void unprint_integer(uint64_t n) {
 
 void print_hexadecimal_no_prefix(uint64_t n, uint64_t a) {
   // use print, not printf to avoid recursion
-  print(itoa(n, integer_buffer, 16, 0, a));
+  print(int_to_ascii(n, integer_buffer, 16, 0, a));
 }
 
 void print_hexadecimal(uint64_t n, uint64_t a) {
@@ -3191,7 +3185,7 @@ void print_hexadecimal(uint64_t n, uint64_t a) {
 
 void print_octal_no_prefix(uint64_t n, uint64_t a) {
   // use print, not printf to avoid recursion
-  print(itoa(n, integer_buffer, 8, 0, a));
+  print(int_to_ascii(n, integer_buffer, 8, 0, a));
 }
 
 void print_octal(uint64_t n, uint64_t a) {
@@ -3200,7 +3194,7 @@ void print_octal(uint64_t n, uint64_t a) {
 
 void print_binary_no_prefix(uint64_t n, uint64_t a) {
   // use print, not printf to avoid recursion
-  print(itoa(n, integer_buffer, 2, 0, a));
+  print(int_to_ascii(n, integer_buffer, 2, 0, a));
 }
 
 void print_binary(uint64_t n, uint64_t a) {
@@ -3780,10 +3774,10 @@ void get_symbol() {
 
           store_character(integer, i, 0); // null-terminated string
 
-          literal = atoi(integer);
+          literal = ascii_to_int(integer);
 
           if (integer_is_signed)
-            if (literal > INT64_MIN) {
+            if (literal > S_INT64_MIN) {
                 syntax_error_message("signed integer out of bound");
 
                 exit(EXITCODE_SCANNERERROR);
@@ -6159,7 +6153,7 @@ void emit_bootstrapping() {
 // -----------------------------------------------------------------
 
 uint64_t open_read_only(char* name) {
-  return sign_extend(open(name, O_RDONLY, 0), SYSCALL_BITWIDTH);
+  return sign_extend(open(name, F_O_RDONLY, 0), SYSCALL_BITWIDTH);
 }
 
 void selfie_compile() {
@@ -6367,7 +6361,7 @@ uint64_t is_temporary_register(uint64_t reg) {
 void read_register_wrap(uint64_t reg, uint64_t wrap) {
   if (*(writes_per_register + reg) > 0) {
     // register has been written to before
-    if (*(reads_per_register + reg) < UINT64_MAX)
+    if (*(reads_per_register + reg) < S_UINT64_MAX)
       *(reads_per_register + reg) = *(reads_per_register + reg) + 1;
 
     // tolerate unwrapped values in register-to-register transfers
@@ -6402,7 +6396,7 @@ void write_register_wrap(uint64_t reg, uint64_t wrap) {
     if (*(registers + REG_SP) < stack_peak)
       stack_peak = *(registers + REG_SP);
 
-  if (*(writes_per_register + reg) < UINT64_MAX)
+  if (*(writes_per_register + reg) < S_UINT64_MAX)
     *(writes_per_register + reg) = *(writes_per_register + reg) + 1;
 }
 
@@ -10501,7 +10495,7 @@ uint64_t instruction_with_max_counter(uint64_t* counters, uint64_t max) {
   uint64_t i;
   uint64_t c;
 
-  a = UINT64_MAX;
+  a = S_UINT64_MAX;
 
   n = 0;
   i = 0;
@@ -10520,10 +10514,10 @@ uint64_t instruction_with_max_counter(uint64_t* counters, uint64_t max) {
     i = i + 1;
   }
 
-  if (a != UINT64_MAX)
+  if (a != S_UINT64_MAX)
     return a * INSTRUCTIONSIZE;
   else
-    return UINT64_MAX;
+    return S_UINT64_MAX;
 }
 
 uint64_t print_per_instruction_counter(uint64_t total, uint64_t* counters, uint64_t max) {
@@ -10532,7 +10526,7 @@ uint64_t print_per_instruction_counter(uint64_t total, uint64_t* counters, uint6
 
   a = instruction_with_max_counter(counters, max);
 
-  if (a != UINT64_MAX) {
+  if (a != S_UINT64_MAX) {
     c = *(counters + a / INSTRUCTIONSIZE);
 
     // CAUTION: we reset counter to avoid reporting it again
@@ -10554,7 +10548,7 @@ uint64_t print_per_instruction_counter(uint64_t total, uint64_t* counters, uint6
 
 void print_per_instruction_profile(char* message, uint64_t total, uint64_t* counters) {
   printf("%s: %s%lu", selfie_name, message, total);
-  print_per_instruction_counter(total, counters, print_per_instruction_counter(total, counters, print_per_instruction_counter(total, counters, UINT64_MAX)));
+  print_per_instruction_counter(total, counters, print_per_instruction_counter(total, counters, print_per_instruction_counter(total, counters, S_UINT64_MAX)));
   println();
 }
 
@@ -11491,9 +11485,9 @@ uint64_t mixter(uint64_t* to_context, uint64_t mix) {
 
   mslice = TIMESLICE;
 
-  if (mslice <= UINT64_MAX / 100)
+  if (mslice <= S_UINT64_MAX / 100)
     mslice = mslice * mix / 100;
-  else if (mslice <= UINT64_MAX / 10)
+  else if (mslice <= S_UINT64_MAX / 10)
     mslice = mslice / 10 * (mix / 10);
   else
     mslice = mslice / 100 * mix;
@@ -11700,7 +11694,7 @@ uint64_t selfie_run(uint64_t machine) {
   reset_profiler();
   reset_microkernel();
 
-  init_memory(atoi(peek_argument(0)));
+  init_memory(ascii_to_int(peek_argument(0)));
 
   current_context = create_context(MY_CONTEXT, 0);
 
